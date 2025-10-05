@@ -30,14 +30,10 @@ A **real-time gesture-based calculator** using **MediaPipe** and **Flask**, with
 - MediaPipe
 - NumPy
 
-gesture_calculator/
-│
-├── app.py             # Main Flask application
-├── templates/
-│   └── index.html     # Frontend HTML page
-├── static/
-│   └── (optional CSS/JS if separated)
-├── README.md
+gesture_calculator/ app.py             # Main Flask application
+gesture_calculator/ templates/ index.html
+gesture_calculator/ static/ (optional CSS/JS if separated)
+gesture_calculator/ README.md
 
 
 Install dependencies:
