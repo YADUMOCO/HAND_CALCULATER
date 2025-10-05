@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gesture Calculator</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #222; 
+            color: white; 
+            margin: 0; 
+            padding: 0;
+        }
+        h1 { text-align: center; margin-top: 20px; }
+
+        /* Main container with flex layout */
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+
+        /* History panel on the left */
+        .history-panel {
+            width: 200px;
+            background: #333;
+            border-radius: 10px;
+            padding: 10px;
+            margin-right: 20px;
+            height: 560px;
+            overflow-y: auto;
+        }
+        .history-panel h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .history-item {
+            border-bottom: 1px solid #555;
+            padding: 5px;
+            font-size: 14px;
+        }
+
+        /* Video container for webcam */
+        .video-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        img {
+            border: 3px solid #555;
+            border-radius: 10px;
+        }
+
+        /* Start/Stop buttons below video */
+        .control-buttons {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .control-buttons button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            background-color: #555;
+            color: white;
+        }
+        .control-buttons button:hover { background-color: #777; }
+
+        /* Help button */
+        #helpBtn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #helpBtn:hover { background-color: #777; }
+
+        /* Help Modal */
+        #helpModal {
+            display: none; 
+            position: fixed;
+            z-index: 1000; 
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            overflow: auto;
+        }
+        #helpContent {
+            background-color: #333;
+            margin: 10% auto;
+            padding: 20px;
+            width: 50%;
+            border-radius: 10px;
+            color: white;
+            text-align: left;
+            font-size: 16px;
+        }
+        #closeHelp {
+            float: right;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #fff;
+        }
+        #closeHelp:hover { color: #ff5555; }
+    </style>
+</head>
+<body>
+    <h1>🖐️ Gesture-Based Calculator</h1>
+
+    <!-- Help button -->
+    <button id="helpBtn">Help ❓</button>
+
+    <!-- Main container -->
+    <div class="main-container">
+        <!-- History Panel -->
+        <div class="history-panel" id="historyPanel">
+            <h2>History</h2>
+            
+        </div>
+
+        <!-- Video feed container -->
+        <div class="video-container">
+            <img id="videoFeed" src="{{ url_for('video') }}" width="720" height="560">
+
+            <!-- Start/Stop buttons below video -->
+            <div class="control-buttons">
+                <button id="startBtn">Start ▶️</button>
+                <button id="stopBtn">Stop ⏹️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal">
+        <div id="helpContent">
+            <span id="closeHelp">&times;</span>
+            <h2>How to Use the Gesture Calculator</h2>
+            <ol>
+                <li>Show <b>1–9 fingers</b> (both hands combined) to select number <b>A</b>.</li>
+                <li>Show <b>1–9 fingers</b> (both hands combined) to select number <b>B</b>.</li>
+                <li>Show operation gesture:
+                    <ul>
+                        <li>1 finger → Add (+)</li>
+                        <li>2 fingers → Subtract (-)</li>
+                        <li>3 fingers → Multiply (*)</li>
+                        <li>4 fingers → Divide (/)</li>
+                    </ul>
+                </li>
+                <li>Result will be displayed on the video feed and auto-reset after a few seconds.</li>
+                <li>Keep your hands steady for the gesture to be recognized correctly.</li>
+                <li>Use <b>Start</b> to begin calculation and <b>Stop</b> to pause execution.</li>
+                <li>Previous calculations will appear in the History panel on the left.</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Help modal logic
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelp = document.getElementById('closeHelp');
+
+        helpBtn.onclick = () => helpModal.style.display = "block";
+        closeHelp.onclick = () => helpModal.style.display = "none";
+        window.onclick = (event) => { if (event.target == helpModal) helpModal.style.display = "none"; }
+
+        // Start/Stop buttons
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
+        startBtn.onclick = () => {
+            fetch('/control/start');
+            startBtn.style.backgroundColor = "#28a745"; // green
+            stopBtn.style.backgroundColor = "#555";
+        }
+
+        stopBtn.onclick = () => {
+            fetch('/control/stop');
+            stopBtn.style.backgroundColor = "#dc3545"; // red
+            startBtn.style.backgroundColor = "#555";
+        }
+
+        // History Panel
+        const historyPanel = document.getElementById('historyPanel');
+        setInterval(() => {
+            fetch('/history')
+                .then(response => response.json())
+                .then(data => {
+                    historyPanel.innerHTML = "<h2>History</h2>";
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = "history-item";
+                        div.textContent = item;
+                        historyPanel.appendChild(div);
+                    });
+                });
+        }, 1000);
+
+        // Stop camera and gesture processing when tab/window is closed
+        window.addEventListener("beforeunload", function (e) {
+            navigator.sendBeacon("/control/stop");
+        });
+    </script>
+</body>
+</html>
